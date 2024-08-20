@@ -1,4 +1,4 @@
-const int sigPin = A0;
+const int sigPin = 6;
 int magVal = 0;
 volatile int Counter = 0;
 volatile int rpm = 0;
@@ -11,23 +11,8 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(sigPin, INPUT);
   Serial.begin(9600);
+  Serial.println('ok its started now');
 }
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  //Serial.println(magVal);
-  magVal = analogRead(sigPin);
-  if (magVal >= check && isPulse == true){
-    Counter ++ ;
-    isPulse = false;
-    timeCheck();
-  }
-  else{
-    isPulse = true;
-    timeCheck();
-  }
-  Serial.println(Counter);
-};
 void timeCheck(){
   timmer ++;
   if (timmer >= 19200){
@@ -41,4 +26,23 @@ void timeCheck(){
     Counter = 0;
     timmer = 0;
   }
+}
+void loop() {
+  // put your main code here, to run repeatedly:
+  //Serial.println(magVal);
+  
+ // magVal = analogRead(sigPin);
+ magVal = digitalRead(sigPin);
+  noInterrupts();
+  timeCheck();
+  interrupts();
+  if (magVal == HIGH && isPulse == true){
+//   if (magVal >= check && isPulse == true){
+    Counter ++ ;
+    isPulse = false;
+  }
+  else{
+    isPulse = true;
+  }
+  //Serial.println(Counter);
 }
