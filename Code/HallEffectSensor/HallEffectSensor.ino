@@ -1,4 +1,4 @@
-const int sigPin = 6;
+const int sigPin = 5;
 int magVal = 0;
 float Counter = 1;
 float rpm = 1;
@@ -20,7 +20,7 @@ void setup() {
 void timeCheck(){
   //timmer ++;
   timmer = timmer +1;
-  if (timmer >= 19200) {
+  if (timmer >= 200) {
     rpm = Counter * 30;
     GForce = 11.2 * rotorRad * pow((rpm/1000),2);
     Serial.print("the rpm of the rotor is currently ");
@@ -31,6 +31,10 @@ void timeCheck(){
     Counter = 0;
     timmer = 0;
   }
+  Serial.print("Timer ");
+  Serial.println(timmer);
+  Serial.print("Counter ");
+  Serial.println(Counter);
 }
 
 
@@ -41,7 +45,7 @@ void loop() {
  // magVal = analogRead(sigPin);
   magVal = digitalRead(sigPin);
   timeCheck();
-  if (magVal == HIGH && isPulse == true){
+  if (magVal == LOW && isPulse == true){
 //   if (magVal >= check && isPulse == true){
     Counter ++ ;
     isPulse = false;
