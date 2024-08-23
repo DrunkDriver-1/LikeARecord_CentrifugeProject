@@ -1,44 +1,35 @@
-const int sigPin = A0;
-int magVal = 0;
-volatile int Counter = 0;
-volatile int rpm = 0;
-volatile int GForce = 0;
-bool isPulse = true;
-const int check = 20;
-int timmer = 0;
+volatile unsigned int pulseCount = 0;
+unsigned long previousMillis = 0;
+const long interval = 1000; // 1 second interval
+float rpm = 0;
+float rcf = 0;
 int rotorRad = 20;
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(sigPin, INPUT);
   Serial.begin(9600);
+  pinMode(2, INPUT_PULLUP);  // Hall effect sensor connected to pin 2
+  attachInterrupt(digitalPinToInterrupt(2), countPulse, FALLING);  // Interrupt on falling edge
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  //Serial.println(magVal);
-  magVal = analogRead(sigPin);
-  if (magVal >= check && isPulse == true){
-    Counter ++ ;
-    isPulse = false;
-    timeCheck();
+  unsigned long currentMillis = millis();
+  
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    
+    // Calculate RPM (pulseCount / number of magnets) * (60000 / interval)
+    noInterrupts();
+    rpm = (pulseCount / 1.0) * (60000.0 / interval); // Assuming 1 magnet
+    pulseCount = 0; 
+    interrupts();
+    Serial.print("RPM: ");
+    Serial.println(rpm);
+    rcf = 11.2 * rotorRad * pow((rpm/1000),2);
+    Serial.print("RCF: ");
+    Serial.println(rcf);
+     // Reset pulse count
   }
-  else{
-    isPulse = true;
-    timeCheck();
-  }
-  Serial.println(Counter);
-};
-void timeCheck(){
-  timmer ++;
-  if (timmer >= 19200){
-    rpm = Counter * 30;
-    GForce = 11.2 * rotorRad * pow((rpm/1000),2);
-    Serial.println('the rpm of the rotor is currently ');
-    Serial.print(rpm);
-    Serial.println('and the RCF is ');
-    Serial.print(GForce);
-    Serial.print(' G');
-    Counter = 0;
-    timmer = 0;
-  }
+}
+
+void countPulse() {
+  pulseCount++;
 }

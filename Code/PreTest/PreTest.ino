@@ -1,22 +1,32 @@
-int enA = 9;
-int in1 = 8;
-int in2 = 7;
-
+volatile unsigned int pulseCount = 0;
+unsigned long previousMillis = 0;
+const long interval = 1000; // 1 second interval
+float rpm = 0;
+float rcf = 0;
+int rotorRad = 20;
 void setup() {
-	// Set all the motor control pins to outputs
-	pinMode(enA, OUTPUT);
-	pinMode(in1, OUTPUT);
-	pinMode(in2, OUTPUT);
-	
-	// Turn off motors - Initial state
-	digitalWrite(in1, LOW);
-	digitalWrite(in2, LOW);
+  Serial.begin(9600);
+  pinMode(2, INPUT_PULLUP);  // Hall effect sensor connected to pin 2
+  attachInterrupt(digitalPinToInterrupt(2), countPulse, FALLING);  // Interrupt on falling edge
 }
 
-	void loop() {
-  digitalWrite(in1, LOW);
-	digitalWrite(in2, HIGH);
-	analogWrite(enA,105);
+void loop() {
+  unsigned long currentMillis = millis();
+  
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    
+    // Calculate RPM (pulseCount / number of magnets) * (60000 / interval)
+    rpm = (pulseCount / 1.0) * (60000 / interval); // Assuming 1 magnet
+    Serial.print("RPM: ");
+    Serial.println(rpm);
+    rcf = 11.2 * rotorRad * pow((rpm/1000),2);
+    Serial.print("RCF: ");
+    Serial.println(rcf);
+    pulseCount = 0;  // Reset pulse count
+  }
+}
 
-	delay(1000);
+void countPulse() {
+  pulseCount++;
 }
