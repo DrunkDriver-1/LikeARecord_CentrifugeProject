@@ -1,62 +1,56 @@
-#define CLK 10  // Interrupt pin for CLK (A)
-#define DT 3   // Pin for DT (B)
-#define SW 4   // Interrupt pin for SW (Button)
+#define CLK 10     // Pin for the encoder CLK (A)
+#define DT 11      // Pin for the encoder DT (B)
+#define SW 12      // Pin for the encoder SW (Button)
 
-volatile int counter = 0;  // Counter for the number
-volatile int lastStateDT = 0;  // To keep track of the last state of DT
-volatile bool buttonPressed = false;  // Flag to track button press
-
+int counter = 0;   // Counter for the rotary encoder
+int lastStateCLK;  // To store the previous state of CLK
+int currentStateCLK; // To store the current state of CLK
+int buttonState;   // To store the state of the button
+int lastButtonState = HIGH; // Last state of the button (HIGH by default if not pressed)
+int increment = 25
 void setup() {
-  pinMode(CLK, INPUT_PULLUP);
-  pinMode(DT, INPUT_PULLUP);
-  pinMode(SW, INPUT_PULLUP);
+  // Set encoder pins as inputs
+  pinMode(CLK, INPUT);
+  pinMode(DT, INPUT);
+  pinMode(SW, INPUT_PULLUP); // Use the internal pull-up resistor for the button
 
+  // Read the initial state of CLK
+  lastStateCLK = digitalRead(CLK);
+
+  // Initialize the serial monitor
   Serial.begin(9600);
-
-  // Initialize lastStateDT
-  lastStateDT = digitalRead(DT);
-
-  // Attach interrupt to CLK pin (triggers on a change in state)
-  attachInterrupt(digitalPinToInterrupt(CLK), updateEncoder, CHANGE);
-
-  // Attach interrupt to SW pin (triggers on button press)
-  attachInterrupt(digitalPinToInterrupt(SW), handleButtonPress, FALLING);
 }
 
 void loop() {
-  // Display the counter value
-  Serial.print("Counter: ");
-  Serial.println(counter);
-  delay(200);  // Just to slow down the serial output for readability
+  // Read the current state of CLK
+  currentStateCLK = digitalRead(CLK);
 
-  // Check if the button was pressed
-  if (buttonPressed) {
-    Serial.println("Button was pressed!");
-    buttonPressed = false;  // Reset the flag
-  }
-}
-
-void updateEncoder() {
-  // Read the state of DT
-  int currentStateDT = digitalRead(DT);
-
-  // Determine rotation direction
-  if (currentStateDT != lastStateDT) {
-    if (currentStateDT == HIGH) {
-      counter++;
+  // If the previous and the current state of CLK are different, that means the encoder is rotating
+  if (currentStateCLK != lastStateCLK) {
+    // If the DT state is different than the CLK state, then the encoder is rotating clockwise
+    if (digitalRead(DT) != currentStateCLK) {
+      counter = counter + increment;
     } else {
-      counter--;
+      counter = counter - increment;
     }
+
+    // Print the counter value
+    Serial.print("Counter: ");
+    Serial.println(counter);
   }
 
-  // Update last state of DT
-  lastStateDT = currentStateDT;
-}
+  // Update lastStateCLK with the current state
+  lastStateCLK = currentStateCLK;
 
-void handleButtonPress() {
-  // Set flag to indicate button press
-  buttonPressed = true;
-  
-  // Small delay to debounce button press (if needed)
-  delay(50);
+  // Read the button state
+  buttonState = digitalRead(SW);
+
+  // If the button was pressed (goes from HIGH to LOW)
+  if (buttonState == LOW && lastButtonState == HIGH) {
+    Serial.println("Button pressed!");
+    // Perform any action you want when the button is pressed
+  }
+
+  // Update the last button state
+  lastButtonState = buttonState;
 }
